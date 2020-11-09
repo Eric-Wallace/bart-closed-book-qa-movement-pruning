@@ -40,7 +40,8 @@ def main():
 
     ## Model parameters
     parser.add_argument("--checkpoint", type=str)
-    parser.add_argument("--do_lowercase", action='store_true', default=True)
+    parser.add_argument("--do_lowercase", action='store_true', default=False)
+    parser.add_argument("--model_name", type=str)
 
     # Preprocessing/decoding-related parameters
     parser.add_argument('--max_input_length', type=int, default=32)
@@ -83,7 +84,22 @@ def main():
                         help="Use a subset of data for debugging")
     parser.add_argument('--seed', type=int, default=42,
                         help="random seed for initialization")
+
+    parser.add_argument("--mask_scores_learning_rate", default=1e-2, type=float, help="The Adam initial learning rate of the mask scores.",)
+    parser.add_argument("--initial_threshold", default=0.0, type=float, help="Initial value of the threshold (for scheduling).")
+    parser.add_argument("--final_threshold", default=0.1, type=float, help="Final value of the threshold (for scheduling).")
+    parser.add_argument("--initial_warmup", default=1, type=int, help="Run `initial_warmup` * `warmup_steps` steps of threshold warmup during which threshold stays" "at its `initial_threshold` value (sparsity schedule).",)
+    parser.add_argument("--final_warmup", default=2, type=int, help="Run `final_warmup` * `warmup_steps` steps of threshold cool-down during which threshold stays" "at its final_threshold value (sparsity schedule).",)
+    parser.add_argument("--pruning_method", default="sigmoied_threshold", type=str, help="Pruning Method (l0 = L0 regularization, magnitude = Magnitude pruning, topK = Movement pruning, sigmoied_threshold = Soft movement pruning).",)
+    parser.add_argument("--mask_init", default="constant", type=str,help="Initialization method for the mask scores. Choices: constant, uniform, kaiming.", )
+    parser.add_argument("--mask_scale", default=0.0, type=float, help="Initialization parameter for the chosen initialization method.")
+    parser.add_argument("--regularization", default="l1", help="Add L0 or L1 regularization to the mask scores.")
+    parser.add_argument("--final_lambda", default=200.0, type=float, help="Regularization intensity (used in conjunction with `regularization`.",)
+    parser.add_argument("--global_topk", action="store_true", help="Global TopK on the Scores.")
+    parser.add_argument("--global_topk_frequency_compute", default=25, type=int, help="Frequency at which we compute the TopK global threshold.",)
     args = parser.parse_args()
+    if args.regularization == "null":
+        args.regularization = None
     if os.path.exists(args.output_dir) and os.listdir(args.output_dir):
         print("Output directory () already exists and is not empty.")
     if not os.path.exists(args.output_dir):

@@ -83,14 +83,12 @@ class QAData(object):
             if self.args.do_lowercase:
                 questions = [question.lower() for question in questions]
                 answers = [answer.lower() for answer in answers]
-            if self.args.append_another_bos:
-                questions = ["<s> "+question for question in questions]
-                answers = ["<s> " +answer for answer in answers]
+            answers = [answer + '</s>' for answer in answers]
             question_input = tokenizer.batch_encode_plus(questions,
-                                                         pad_to_max_length=True,
+                                                         padding='longest',
                                                          max_length=self.args.max_input_length)
             answer_input = tokenizer.batch_encode_plus(answers,
-                                                       pad_to_max_length=True)
+                                                       padding='longest')
             input_ids, attention_mask = question_input["input_ids"], question_input["attention_mask"]
             decoder_input_ids, decoder_attention_mask = answer_input["input_ids"], answer_input["attention_mask"]
             if self.load:
